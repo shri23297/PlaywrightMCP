@@ -25,5 +25,31 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
-      - name: Run Playwright tests
-        run: npx playwright test
+      - name: Run Playwright tests (produce HTML and JUnit reports)
+        env:
+          CI: true
+        run: |
+          # Run Playwright and generate HTML report and JUnit XML
+          npx playwright test --reporter=dot --reporter=html --reporter=junit
+
+      - name: Upload Playwright HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report
+
+      - name: Upload JUnit/other XML results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-results
+          path: '**/*.xml'
+
+      - name: Publish JUnit to GitHub Checks
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: Playwright Tests
+          path: '**/*.xml'
+          reporter: junit
